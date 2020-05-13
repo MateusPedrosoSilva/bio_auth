@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:flutter/services.dart';
+import 'package:local_auth/error_codes.dart' as auth_error;
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -29,12 +32,18 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  var localAuth = LocalAuthentication();
+  bool didAuthenticate = false;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  void tryAuth() async {
+    try {
+      didAuthenticate = await localAuth.authenticateWithBiometrics(localizedReason: 'Please authenticate to show account balance');
+      setState(() {});
+    } on PlatformException catch (e) {
+      if (e.code == auth_error.notAvailable) {
+        // Handle this exception here.
+      }
+    }
   }
 
   @override
@@ -45,36 +54,21 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            Visibility(
+              visible: didAuthenticate,
+              child: Text(
+                'You have been authenticated!',
+              ),
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
+        onPressed: tryAuth,
+        tooltip: 'Biometric',
+        child: Icon(Icons.fingerprint),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
